@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Username Hunter</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090b12;color:#f4f5fa;font-family:Arial,sans-serif;padding:18px}
+main{max-width:760px;margin:28px auto;background:#151925;border:1px solid #293044;border-radius:18px;padding:22px}
+h1{text-align:center;margin:0 0 7px;font-size:25px}.sub{text-align:center;color:#9ba5b8;font-size:13px;margin:0 0 24px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;color:#cbd2df;font-size:13px;margin:13px 0 7px}
+input,select{width:100%;background:#0d111b;color:#fff;border:1px solid #343d52;border-radius:9px;padding:12px;font-size:14px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:17px}
+button{border:0;border-radius:9px;padding:12px 15px;background:#7657e8;color:white;font-weight:bold;cursor:pointer}
+button.secondary{background:#30394c}
+#results{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px;margin-top:18px}
+.item{background:#0d111b;border:1px solid #293247;border-radius:10px;padding:11px;display:flex;align-items:center;justify-content:space-between;gap:8px;direction:ltr}
+.item code{font-size:15px;font-weight:bold;overflow-wrap:anywhere}.item button{padding:7px 9px;font-size:12px}
+.meta{color:#9ba5b8;font-size:12px;margin-top:16px;line-height:1.7}
+#status{color:#b9c3d5;font-size:13px;margin-top:12px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}main{padding:17px}}
+</style></head><body><main>
+<h1>🎯 Username Hunter</h1><p class="sub">مولّد يوزرات ثلاثية ورباعية ومميزة</p>
+<div class="grid">
+<div><label for="length">طول اليوزر</label><select id="length"><option value="3">ثلاثي — 3 خانات</option><option value="4" selected>رباعي — 4 خانات</option><option value="both">ثلاثي ورباعي</option></select></div>
+<div><label for="style">نمط التوليد</label><select id="style"><option value="mixed">مختلط</option><option value="letters">حروف فقط</option><option value="digits">أرقام فقط</option><option value="repeat">متكرر / متناظر</option><option value="sequence">متناسق / متتابع</option></select></div>
+<div><label for="count">عدد النتائج</label><select id="count"><option>25</option><option selected>100</option><option>250</option><option>500</option><option>1000</option></select></div>
+<div><label for="charset">مجموعة الحروف</label><select id="charset"><option value="abcdefghijklmnopqrstuvwxyz">إنجليزية صغيرة</option><option value="abcdefghijklmnopqrstuvwxyz0123456789">حروف + أرقام</option><option value="0123456789">أرقام فقط</option></select></div>
+</div>
+<div class="actions"><button id="generate">توليد اليوزرات</button><button class="secondary" id="copyAll">نسخ الكل</button><button class="secondary" id="download">تنزيل TXT</button><button class="secondary" id="clear">مسح النتائج</button></div>
+<div id="status" aria-live="polite">جاهز للتوليد — النتائج اقتراحات وليست فحص توفر.</div><section id="results"></section>
+<p class="meta">ملاحظة: تعمل الأداة محلياً في المتصفح وتولّد اقتراحات فقط. لا تسجّل الدخول إلى Instagram ولا تفحص التوفر تلقائياً. تحقّق من الاسم يدوياً عبر Instagram قبل استخدامه.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);let usernames=[];
+function pick(s){return s[Math.floor(Math.random()*s.length)]}
+function makeName(len,style,chars){
+ const letters="abcdefghijklmnopqrstuvwxyz",digits="0123456789";
+ if(style==="digits")return Array.from({length:len},()=>pick(digits)).join("");
+ if(style==="letters")return Array.from({length:len},()=>pick(letters)).join("");
+ if(style==="repeat"){const c=pick(chars);const p=len===3?[c+c+c,c+pick(chars)+c,pick(chars)+c+c]:[c+c+c+c,c+pick(chars)+pick(chars)+c,pick(chars)+c+c+pick(chars)];return pick(p)}
+ if(style==="sequence"){const start=Math.floor(Math.random()*(chars.length-len+1));if(Math.random()<.5)return chars.slice(start,start+len);return pick(chars)+Array.from({length:len-1},()=>pick(chars)).join("")}
+ return Array.from({length:len},()=>pick(chars)).join("");
+}
+function generate(){
+ const length=$("length").value,style=$("style").value,chars=$("charset").value,count=Number($("count").value),lengths=length==="both"?[3,4]:[Number(length)],set=new Set();let tries=0;
+ while(set.size<count&&tries<count*40){set.add(makeName(lengths[Math.floor(Math.random()*lengths.length)],style,chars));tries++}
+ usernames=[...set];render();$("status").textContent=`تم توليد ${usernames.length} اقتراحاً. لم يتم التحقق من توفرها.`;
+}
+function render(){const root=$("results");root.replaceChildren();usernames.forEach(name=>{const card=document.createElement("div");card.className="item";const code=document.createElement("code");code.textContent=name;const btn=document.createElement("button");btn.textContent="نسخ";btn.addEventListener("click",()=>copyText(name));card.append(code,btn);root.append(card)})}
+async function copyText(text){try{await navigator.clipboard.writeText(text);$("status").textContent="تم النسخ."}catch(e){$("status").textContent="تعذر النسخ تلقائياً؛ استخدم تنزيل TXT."}}
+$("generate").addEventListener("click",generate);
+$("copyAll").addEventListener("click",()=>{if(!usernames.length){$("status").textContent="ولّد نتائج أولاً.";return}copyText(usernames.join("\n"))});
+$("download").addEventListener("click",()=>{if(!usernames.length){$("status").textContent="ولّد نتائج أولاً.";return}const blob=new Blob([usernames.join("\n")],{type:"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="username-suggestions.txt";a.click();URL.revokeObjectURL(url)});
+$("clear").addEventListener("click",()=>{usernames=[];render();$("status").textContent="تم مسح النتائج."});
+</script></body></html>
